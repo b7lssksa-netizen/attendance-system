@@ -3,15 +3,8 @@ import sys
 from flask import Flask, render_template, redirect, url_for, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from functools import wraps
-
-# تعريف التوقيت السعودي (UTC+3)
-SAUDI_TZ = timezone(timedelta(hours=3))
-
-def get_saudi_time():
-    """الحصول على الوقت الحالي بتوقيت السعودية"""
-    return datetime.now(SAUDI_TZ)
 
 # تهيئة تطبيق Flask
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -19,7 +12,8 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 # إعدادات قاعدة البيانات (SQLite)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SECRET_KEY'] = os.urandom(24) # مفتاح سري لتأمين الجلسات
+
 db = SQLAlchemy(app)
 
 # =================================================================
@@ -46,7 +40,7 @@ class User(db.Model):
 class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=get_saudi_time)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     record_type = db.Column(db.String(10), nullable=False) # 'checkin' or 'checkout'
 
     def __repr__(self):
@@ -140,7 +134,7 @@ def attendance_system():
 @login_required
 def attendance_status():
     user_id = session['user_id']
-    today_start = get_saudi_time().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     records = Attendance.query.filter_by(user_id=user_id).filter(Attendance.timestamp >= today_start).order_by(Attendance.timestamp.desc()).all()
     
     is_checked_in = False
@@ -173,7 +167,7 @@ def attendance_status():
 @login_required
 def checkin():
     user_id = session['user_id']
-    today_start = get_saudi_time().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     last_record = Attendance.query.filter_by(user_id=user_id).filter(Attendance.timestamp >= today_start).order_by(Attendance.timestamp.desc()).first()
     
     if last_record and last_record.record_type == 'checkin':
@@ -189,7 +183,7 @@ def checkin():
 @login_required
 def checkout():
     user_id = session['user_id']
-    today_start = get_saudi_time().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     last_record = Attendance.query.filter_by(user_id=user_id).filter(Attendance.timestamp >= today_start).order_by(Attendance.timestamp.desc()).first()
 
     if not last_record or last_record.record_type == 'checkout':
@@ -205,23 +199,27 @@ def checkout():
 # وظيفة تهيئة قاعدة البيانات
 # =================================================================
 
-def create_db():
+@app.route('/init_db_secret_endpoint_123456')
+def init_db_secret_endpoint():
+    try:
+        with app.app_context():
+            db.create_all()
+        return "Database initialized successfully!", 200
+    except Exception as e:
+        return f"Database initialization failed: {str(e)}", 500
+
+# محاولة تهيئة قاعدة البيانات تلقائيًا عند استيراد التطبيق
+# هذا الكود سيتم تشغيله عند استيراد Gunicorn للتطبيق
+try:
     with app.app_context():
         db.create_all()
-        print("تم إنشاء قاعدة البيانات والجداول بنجاح.")
+    print("Database tables created automatically.")
+except Exception as e:
+    print(f"Automatic database creation failed: {e}")
 
 # =================================================================
 # تشغيل التطبيق
 # =================================================================
 
-with app.app_context():
-    db.create_all()
-    print("✅ Database tables created successfully!")
-
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'create_db':
-        create_db()
-    else:
-        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
-
-
+    app.run(host='0.0.0.0', port=5000, debug=True)
