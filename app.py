@@ -9,12 +9,24 @@ from functools import wraps
 # تهيئة تطبيق Flask
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# إعدادات قاعدة البيانات (SQLite)
-# ملاحظة: SQLite غير مناسب للبيئات السحابية مثل Render لأنه لا يحفظ البيانات بشكل دائم.
-# الحل المؤقت هو استخدام التهيئة اليدوية. الحل الدائم هو الترقية إلى PostgreSQL.
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
+# =================================================================
+# إعدادات قاعدة البيانات (PostgreSQL)
+# =================================================================
+
+# رابط قاعدة البيانات الذي تم تزويده من قبل المستخدم
+# ملاحظة: هذا الرابط يحتوي على كلمة مرور، يفضل وضعه كمتغير بيئة على Render
+POSTGRES_DB_URL = "postgresql://attendance_user:VknUvOd3mHCBrYHZKFwTcwGtE4X84yLM@dpg-d3psnhs9c44c73cb310g-a/attendance_db_bgua"
+
+# استخدام متغير بيئة إذا كان متوفراً (أفضل ممارسة)
+# إذا لم يكن متوفراً، نستخدم الرابط الذي تم تزويده
+DATABASE_URL = os.environ.get('DATABASE_URL', POSTGRES_DB_URL)
+
+# تأكد من أن الرابط يستخدم postgresql بدلاً من postgres
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# استخدام متغير بيئة للمفتاح السري (أفضل للمنصات السحابية)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
 
 db = SQLAlchemy(app)
@@ -199,17 +211,22 @@ def checkout():
     return {'status': 'success', 'message': 'تم تسجيل الانصراف بنجاح!', 'record': dict(type=new_record.record_type, timestamp=new_record.timestamp.isoformat())}, 201
 
 # =================================================================
-# وظيفة تهيئة قاعدة البيانات
+# تهيئة قاعدة البيانات (تنفذ مرة واحدة فقط)
 # =================================================================
 
-@app.route('/init-db-now')
-def init_db_secret_endpoint():
-    try:
-        with app.app_context():
-            db.create_all()
-        return "Database initialized successfully!", 200
-    except Exception as e:
-        return f"Database initialization failed: {str(e)}", 500
+def create_db_tables():
+    with app.app_context():
+        # إنشاء الجداول في قاعدة بيانات PostgreSQL
+        db.create_all()
+        print("Database tables created successfully for PostgreSQL.")
+
+# تشغيل التهيئة عند بداية التطبيق (لضمان إنشاء الجداول لأول مرة)
+# ملاحظة: هذا الكود سيعمل فقط عند تشغيل التطبيق لأول مرة أو بعد التعديل
+# إذا كان التطبيق يعمل بالفعل، ستحتاج إلى إعادة تشغيله يدوياً على Render
+try:
+    create_db_tables()
+except Exception as e:
+    print(f"Error during initial database table creation: {e}")
 
 # =================================================================
 # تشغيل التطبيق
