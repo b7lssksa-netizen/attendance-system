@@ -10,9 +10,12 @@ from functools import wraps
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # إعدادات قاعدة البيانات (SQLite)
+# ملاحظة: SQLite غير مناسب للبيئات السحابية مثل Render لأنه لا يحفظ البيانات بشكل دائم.
+# الحل المؤقت هو استخدام التهيئة اليدوية. الحل الدائم هو الترقية إلى PostgreSQL.
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.urandom(24) # مفتاح سري لتأمين الجلسات
+# استخدام متغير بيئة للمفتاح السري (أفضل للمنصات السحابية)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
 
 db = SQLAlchemy(app)
 
@@ -199,7 +202,7 @@ def checkout():
 # وظيفة تهيئة قاعدة البيانات
 # =================================================================
 
-@app.route('/init_db_secret_endpoint_123456')
+@app.route('/init-db-now')
 def init_db_secret_endpoint():
     try:
         with app.app_context():
@@ -207,15 +210,6 @@ def init_db_secret_endpoint():
         return "Database initialized successfully!", 200
     except Exception as e:
         return f"Database initialization failed: {str(e)}", 500
-
-# محاولة تهيئة قاعدة البيانات تلقائيًا عند استيراد التطبيق
-# هذا الكود سيتم تشغيله عند استيراد Gunicorn للتطبيق
-try:
-    with app.app_context():
-        db.create_all()
-    print("Database tables created automatically.")
-except Exception as e:
-    print(f"Automatic database creation failed: {e}")
 
 # =================================================================
 # تشغيل التطبيق
