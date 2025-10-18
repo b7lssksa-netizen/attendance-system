@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الحضور والانصراف - شركة الكهرباء السعودية</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/f5.css') }}">
+    <!-- سنستخدم مكتبة XLSX لتصدير Excel في الواجهة الأمامية -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="{{ url_for('static', filename='js/f5.js') }}" defer></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-right">
+                <div class="logo">⚡</div>
+                <div class="header-title">
+                    <h1>نظام الحضور والانصراف</h1>
+                    <p>لوحة تحكم الموظف</p>
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">{{ user.fullname[0] if user.fullname else '?' }}</div>
+                <div class="user-details">
+                    <h3 id="userName">{{ user.fullname }}</h3>
+                    <p id="userEmail">{{ user.email }}</p>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn" id="logoutBtn">تسجيل الخروج</a>
+            </div>
+        </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="message {{ category }} show">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="message" id="message"></div>
+
+        <div class="main-content">
+            <div class="card">
+                <div class="card-icon">⏰</div>
+                <h2>تسجيل الحضور/الانصراف</h2>
+                <div class="time-display" id="currentTime">00:00:00</div>
+                <div class="date-display" id="currentDate">الخميس، 16 أكتوبر 2025</div>
+                <button class="attendance-btn btn-checkin" id="checkInBtn">تسجيل الحضور</button>
+                <button class="attendance-btn btn-checkout" id="checkOutBtn" disabled>تسجيل الانصراف</button>
+                <div class="status-badge status-inactive" id="statusBadge">لم يتم تسجيل الحضور بعد</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <h2>ملخص اليوم</h2>
+                <div class="time-display" id="checkInTime">--:--</div>
+                <div class="date-display">وقت الحضور</div>
+                <div class="time-display" id="checkOutTime">--:--</div>
+                <div class="date-display">وقت الانصراف</div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <div class="history-header">
+                <h2>سجل الحضور والانصراف</h2>
+                <div class="action-buttons">
+                    <button class="excel-btn" id="exportExcelBtn">
+                        تصدير Excel
+                    </button>
+                    <button class="clear-btn" id="clearHistoryBtn" style="display: none;">مسح السجل (للتجربة)</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الوقت</th>
+                            <th>النوع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- سيتم ملء هذا بواسطة JavaScript -->
+                    </tbody>
+                </table>
+                <p class="empty-message" id="emptyMessage">لا يوجد سجلات حضور وانصراف حتى الآن.</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - شركة الكهرباء السعودية</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/f2.css') }}">
+    <script src="{{ url_for('static', filename='js/f2.js') }}" defer></script>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="header">
+            <div class="logo">⚡</div>
+            <h1 class="title">تسجيل الدخول</h1>
+            <p class="subtitle">شركة الكهرباء السعودية</p>
+        </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="message {{ category }} show">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="message" id="message"></div>
+
+        <form id="loginForm" method="POST" action="/login">
+            <div class="form-group">
+                <label class="form-label" for="email">البريد الإلكتروني</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="أدخل البريد الإلكتروني" autocomplete="email" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">كلمة المرور</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" class="form-input" placeholder="أدخل كلمة المرور" autocomplete="current-password" required>
+                    <span class="toggle-password" id="togglePassword">👁️</span>
+                </div>
+            </div>
+
+            <div class="form-options">
+                <div class="remember-me">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">تذكرني</label>
+                </div>
+                <a href="{{ url_for('forgot_password') }}" class="forgot-link">نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" class="btn-login">تسجيل الدخول</button>
+        </form>
+
+        <div class="divider ">
+            <span>أو</span>
+        </div>
+
+        <p class="register-text ">
+            ليس لديك حساب؟ <a href="{{ url_for('register') }}" id="registerLink">إنشاء حساب جديد</a>
+        </p>
+    </div>
+</body>
+
+</html>

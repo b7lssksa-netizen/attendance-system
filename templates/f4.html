@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب جديد - شركة الكهرباء السعودية</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/f4.css') }}">
+    <script src="{{ url_for('static', filename='js/f4.js') }}" defer></script>
+</head>
+
+<body>
+    <div class="register-container">
+        <div class="header">
+            <div class="logo">⚡</div>
+            <h1 class="title">إنشاء حساب جديد</h1>
+            <p class="subtitle">شركة الكهرباء السعودية</p>
+        </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="message {{ category }} show">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="message" id="message"></div>
+
+        <form id="registerForm" method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label class="form-label" for="fullname">الاسم الكامل</label>
+                <input type="text" id="fullname" name="fullname" class="form-input" placeholder="أدخل اسمك الكامل" autocomplete="name" required>
+                <div class="error-text" id="fullnameError">الرجاء إدخال الاسم الكامل</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">البريد الإلكتروني</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="example@email.com" autocomplete="email" required>
+                <div class="error-text" id="emailError">الرجاء إدخال بريد إلكتروني صحيح</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">كلمة المرور</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" class="form-input" placeholder="أدخل كلمة مرور قوية" autocomplete="new-password" required>
+                    <span class="toggle-password" id="togglePassword">👁️</span>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                </div>
+                <div class="password-strength-text" id="passwordStrengthText"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">تأكيد كلمة المرور</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="أعد إدخال كلمة المرور" autocomplete="new-password" required>
+                <div class="error-text" id="confirmPasswordError">كلمتا المرور غير متطابقتين</div>
+            </div>
+
+            <div class="terms-checkbox">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">أوافق على <a href="/terms">الشروط والأحكام</a> و <a href="/privacy">سياسة الخصوصية</a></label>
+            </div>
+
+            <button type="submit" class="btn-register" id="registerButton">إنشاء حساب</button>
+        </form>
+
+        <div class="divider ">
+            <span>أو</span>
+        </div>
+
+        <p class="login-text ">
+            لديك حساب بالفعل؟ <a href="{{ url_for('login') }}">تسجيل الدخول</a>
+        </p>
+    </div>
+</body>
+
+</html>
