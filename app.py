@@ -19,8 +19,7 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 # إعدادات قاعدة البيانات (SQLite)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.urandom(24) # مفتاح سري لتأمين الجلسات
-
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 db = SQLAlchemy(app)
 
 # =================================================================
