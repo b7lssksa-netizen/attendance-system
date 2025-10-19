@@ -13,13 +13,13 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 # إعدادات قاعدة البيانات (PostgreSQL)
 # =================================================================
 
-# رابط قاعدة البيانات الذي تم تزويده من قبل المستخدم
-# ملاحظة: هذا الرابط يحتوي على كلمة مرور، يفضل وضعه كمتغير بيئة على Render
-POSTGRES_DB_URL = "postgresql://attendance_user:VknUvOd3mHCBrYHZKFwTcwGtE4X84yLM@dpg-d3psnhs9c44c73cb310g-a/attendance_db_bgua"
+# سيتم قراءة رابط قاعدة البيانات من متغير البيئة DATABASE_URL
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# استخدام متغير بيئة إذا كان متوفراً (أفضل ممارسة)
-# إذا لم يكن متوفراً، نستخدم الرابط الذي تم تزويده
-DATABASE_URL = os.environ.get('DATABASE_URL', POSTGRES_DB_URL)
+# يجب التأكد من وجود الرابط
+if not DATABASE_URL:
+    print("FATAL ERROR: DATABASE_URL environment variable is not set.")
+    sys.exit(1)
 
 # تأكد من أن الرابط يستخدم postgresql بدلاً من postgres
 if DATABASE_URL.startswith("postgres://"):
@@ -211,7 +211,7 @@ def checkout():
     return {'status': 'success', 'message': 'تم تسجيل الانصراف بنجاح!', 'record': dict(type=new_record.record_type, timestamp=new_record.timestamp.isoformat())}, 201
 
 # =================================================================
-# تهيئة قاعدة البيانات (تنفذ مرة واحدة فقط)
+# وظيفة تهيئة قاعدة البيانات (تنفذ مرة واحدة فقط)
 # =================================================================
 
 def create_db_tables():
@@ -220,17 +220,14 @@ def create_db_tables():
         db.create_all()
         print("Database tables created successfully for PostgreSQL.")
 
-# تشغيل التهيئة عند بداية التطبيق (لضمان إنشاء الجداول لأول مرة)
-# ملاحظة: هذا الكود سيعمل فقط عند تشغيل التطبيق لأول مرة أو بعد التعديل
-# إذا كان التطبيق يعمل بالفعل، ستحتاج إلى إعادة تشغيله يدوياً على Render
-try:
-    create_db_tables()
-except Exception as e:
-    print(f"Error during initial database table creation: {e}")
-
 # =================================================================
 # تشغيل التطبيق
 # =================================================================
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # عند التشغيل المحلي، نقوم بتهيئة قاعدة البيانات
+    if len(sys.argv) > 1 and sys.argv[1] == 'create_db_tables':
+        create_db_tables()
+    else:
+        app.run(host='0.0.0.0', port=5000, debug=True)
+
